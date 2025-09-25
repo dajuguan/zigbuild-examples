@@ -1,0 +1,10 @@
+[package]
+name = "rustlib_wrapper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[lib]
+name = "rustlib_wrapper"
+crate-type = ["staticlib"]
