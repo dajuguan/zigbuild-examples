@@ -103,13 +103,20 @@ pub fn buildZiglib(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) void {
-    const libzigadd = b.addLibrary(.{ .name = "zigadd", .linkage = .static, .root_module = b.createModule(
+    const linkage: std.builtin.LinkMode = .static;
+    const libzigadd = b.addLibrary(.{ .name = "zigadd", .linkage = linkage, .root_module = b.createModule(
         .{
             .root_source_file = b.path("lib/ziglib/zig_add.zig"),
             .target = target,
             .optimize = optimize,
         },
     ) });
+
+    if (linkage == .dynamic) {
+        libzigadd.rdynamic = true;
+        libzigadd.linkLibC();
+    }
+
     const exe = b.addExecutable(.{ .name = "zig_add_app", .root_module = b.createModule(.{
         .root_source_file = b.path("src/main_zig.zig"),
         .target = target,
