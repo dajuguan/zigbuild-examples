@@ -103,14 +103,19 @@ pub fn buildZiglib(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) void {
-    const linkage: std.builtin.LinkMode = .static;
-    const libzigadd = b.addLibrary(.{ .name = "zigadd", .linkage = linkage, .root_module = b.createModule(
-        .{
-            .root_source_file = b.path("lib/ziglib/zig_add.zig"),
-            .target = target,
-            .optimize = optimize,
-        },
-    ) });
+    const linkage: std.builtin.LinkMode = .dynamic;
+    const libzigadd = b.addLibrary(.{
+        .name = "zigadd",
+        .linkage = linkage,
+        .root_module = b.createModule(
+            .{
+                .root_source_file = b.path("lib/ziglib/zig_add.zig"),
+                .target = target,
+                .optimize = optimize,
+            },
+        ),
+        .use_llvm = true,
+    });
 
     if (linkage == .dynamic) {
         libzigadd.rdynamic = true;
@@ -124,6 +129,48 @@ pub fn buildZiglib(
     }) });
     exe.linkLibrary(libzigadd);
     b.installArtifact(libzigadd);
+    b.installArtifact(exe);
+}
+
+fn buildHybridlib(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) void {
+    const linkage: std.builtin.LinkMode = .static;
+    const libzigadd = b.addLibrary(.{
+        .name = "hybridadd",
+        .linkage = linkage,
+        .root_module = b.createModule(
+            .{
+                .root_source_file = b.path("lib/ziglib/zig_add.zig"),
+                .target = target,
+                .optimize = optimize,
+            },
+        ),
+        .use_llvm = true,
+    });
+
+    // Couldn't nest archive files.
+    // const rustlibPath = "target/x86_64-unknown-linux-gnu/debug/librustlib_wrapper.a";
+    // libzigadd.addObjectFile(b.path(rustlibPath));
+    // libzigadd.addIncludePath(b.path("lib/rustlib"));
+    // libzigadd.linkSystemLibrary("c");
+
+    b.installArtifact(libzigadd);
+
+    const exe = b.addExecutable(.{ .name = "hybrid_add_app", .linkage = .static, .root_module = b.createModule(.{
+        .root_source_file = b.path("src/main_hybrid.zig"),
+        .target = target,
+        .optimize = optimize,
+    }) });
+    exe.linkLibrary(libzigadd);
+
+    const rustlibPath = "target/x86_64-unknown-linux-gnu/debug/librustlib_wrapper.a";
+    exe.addObjectFile(b.path(rustlibPath));
+    exe.addIncludePath(b.path("lib/rustlib"));
+    exe.linkSystemLibrary("c");
+
     b.installArtifact(exe);
 }
 
@@ -154,4 +201,6 @@ pub fn build(b: *std.Build) void {
     buildZiglib(b, target, optimize);
     const rust_target = getRustTarget(target);
     buildRustlib(b, target, optimize, rust_target);
+
+    buildHybridlib(b, target, optimize);
 }
