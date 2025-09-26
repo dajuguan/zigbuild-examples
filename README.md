@@ -64,10 +64,6 @@ lib/
 - Use `readelf -h zig-out/lib/libzigadd.a` to check the ELF file headers.
 - Use `ar t zig-out/lib/libzigadd.a` to see what's linked in the archive file.
 
-## Supported Zig version
-because Zig is evolving fast, the main repo will try to keep update with latest Zig release, however historical zig build examples can be found by tag.
-- `0.15.1`
-
 ## Supported Zig Versions
 Zig evolves quickly, so the main repo will aim to stay up to date with the latest releases.  
 For older build examples, please check the tags.  
